@@ -8,10 +8,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://parcialinf530adriannina_us
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# Modelo Vehiculo
+# Modelo Vehiculo sin campo 'id' y con 'placa' como clave primaria
 class Vehiculo(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    placa = db.Column(db.String(20), nullable=False, unique=True)
+    placa = db.Column(db.String(20), primary_key=True)
     color = db.Column(db.String(20), nullable=False)
     modelo = db.Column(db.String(50), nullable=False)
     marca = db.Column(db.String(50), nullable=False)
@@ -32,7 +31,6 @@ def home():
 def get_vehiculos():
     vehiculos = Vehiculo.query.all()
     return jsonify([{
-        'id': v.id,
         'placa': v.placa,
         'color': v.color,
         'modelo': v.modelo,
@@ -61,39 +59,36 @@ def add_vehiculo():
         }
     }), 201
 
-
-# Leer un vehículo por ID
-@app.route('/vehiculos/<int:id>', methods=['GET'])
-def get_vehiculo(id):
-    vehiculo = Vehiculo.query.get(id)
+# Leer un vehículo por placa
+@app.route('/vehiculos/<string:placa>', methods=['GET'])
+def get_vehiculo(placa):
+    vehiculo = Vehiculo.query.filter_by(placa=placa).first()
     if not vehiculo:
         return jsonify({'error': 'Vehículo no encontrado'}), 404
     return jsonify({
-        'id': vehiculo.id,
         'placa': vehiculo.placa,
         'color': vehiculo.color,
         'modelo': vehiculo.modelo,
         'marca': vehiculo.marca
     })
 
-# Actualizar un vehículo
-@app.route('/vehiculos/<int:id>', methods=['PUT'])
-def update_vehiculo(id):
-    vehiculo = Vehiculo.query.get(id)
+# Actualizar un vehículo por placa
+@app.route('/vehiculos/<string:placa>', methods=['PUT'])
+def update_vehiculo(placa):
+    vehiculo = Vehiculo.query.filter_by(placa=placa).first()
     if not vehiculo:
         return jsonify({'error': 'Vehículo no encontrado'}), 404
     data = request.json
-    vehiculo.placa = data.get('placa', vehiculo.placa)
     vehiculo.color = data.get('color', vehiculo.color)
     vehiculo.modelo = data.get('modelo', vehiculo.modelo)
     vehiculo.marca = data.get('marca', vehiculo.marca)
     db.session.commit()
     return jsonify({'message': 'Vehículo actualizado exitosamente'})
 
-# Eliminar un vehículo
-@app.route('/vehiculos/<int:id>', methods=['DELETE'])
-def delete_vehiculo(id):
-    vehiculo = Vehiculo.query.get(id)
+# Eliminar un vehículo por placa
+@app.route('/vehiculos/<string:placa>', methods=['DELETE'])
+def delete_vehiculo(placa):
+    vehiculo = Vehiculo.query.filter_by(placa=placa).first()
     if not vehiculo:
         return jsonify({'error': 'Vehículo no encontrado'}), 404
     db.session.delete(vehiculo)
